@@ -1,0 +1,147 @@
+stages:
+  - build
+  - docker-build
+  - deploy
+
+variables:
+  AWS_REGION: ap-northeast-2
+  CI_REGISTRY_PRODUCTION_IMAGE: "engistech/gtsp/production"
+  APP_NAME: tsp_protocol_gateway
+  SPRING_PROFILE: dev
+  USE_GRADLE: "true"
+  ARTIFACT_MAVEN: target/tsp_protocol_gateway-1.0.jar
+  ARTIFACT_GRADLE: build/libs/tsp_protocol_gateway-1.0.jar
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .m2/repository
+    - /tmp/venv
+    - .gradle/caches
+
+.build-job-template:
+  stage: build
+  tags:
+    - asia-korea-hq-146
+  artifacts:
+    expire_in: 1 week
+  retry:
+    max: 2
+  timeout: 30m
+
+build-job-maven:
+  extends: .build-job-template
+  image: maven:3.8.4-openjdk-17-slim #maven:3.8.4-openjdk-11-slim
+  variables:
+    MAVEN_CLI_OPTS: "-B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
+  script:
+    - echo "Building the Maven project..."
+    - mvn package $MAVEN_CLI_OPTS
+    - echo "Calculating artifact size..."
+    - du -sh target/*.jar
+  artifacts:
+    paths:
+      - $ARTIFACT_MAVEN
+  only:
+    variables:
+      - $USE_GRADLE == "false"
+
+build-job-gradle:
+  extends: .build-job-template
+  #image: gradle:7.5-jdk17 #gradle:7.3.3-jdk17 #gradle:7.3.3-jdk11
+  image: gradle:7.5-jdk11
+  script:
+    - echo "Building the Gradle project..."
+    #- chmod +x gradlew
+    #- ./gradlew clean build
+    - gradle clean build
+    - echo "Calculating artifact size..."
+    - du -sh build/libs/*.jar
+  artifacts:
+    paths:
+      - $ARTIFACT_GRADLE
+  only:
+    variables:
+      - $USE_GRADLE == "true"
+
+.aws-login-job-template:
+  before_script:
+    - apk add --no-cache python3 py3-pip
+    - python3 -m venv /tmp/venv
+    - source /tmp/venv/bin/activate
+    - pip install --upgrade pip setuptools wheel
+    - pip install awscli
+    - aws --version
+    - docker --version
+    - echo "Logging into AWS ECR..."
+    - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $CI_AWS_ECR
+    - >
+      if ! aws ecr describe-repositories --repository-names "$CI_REGISTRY_PRODUCTION_IMAGE" --region $AWS_REGION > /dev/null 2>&1; then
+        echo "ECR repository doesn't exist. Creating repository...";
+        aws ecr create-repository --repository-name "$CI_REGISTRY_PRODUCTION_IMAGE" --region $AWS_REGION;
+        sleep 10;
+      else
+        echo "ECR repository exists.";
+      fi
+
+docker-build-job:
+  extends: .aws-login-job-template
+  stage: docker-build
+  image: docker:latest
+  tags:
+    - asia-korea-hq-146
+  script:
+    - echo "Copying JAR file to Docker build context..."
+    - >
+      if [ "$USE_GRADLE" = "true" ]; then
+        cp $ARTIFACT_GRADLE ./${APP_NAME}.jar;
+      else
+        cp $ARTIFACT_MAVEN ./${APP_NAME}.jar;
+      fi
+    - echo "Building Docker image..."
+    - >
+      docker build 
+      --file ./Infra/Docker/Dockerfile 
+      --build-arg APP_NAME=$APP_NAME 
+      --build-arg SPRING_PROFILE=$SPRING_PROFILE 
+      --cache-from=$CI_AWS_ECR/$CI_REGISTRY_PRODUCTION_IMAGE/$APP_NAME:latest 
+      --tag $CI_AWS_ECR/$CI_REGISTRY_PRODUCTION_IMAGE:$APP_NAME-$CI_COMMIT_SHA 
+      --tag $CI_AWS_ECR/$CI_REGISTRY_PRODUCTION_IMAGE:$APP_NAME-latest 
+      .
+    - echo "Pushing Docker image to ECR..."
+    - docker push $CI_AWS_ECR/$CI_REGISTRY_PRODUCTION_IMAGE:$APP_NAME-$CI_COMMIT_SHA
+    - docker push $CI_AWS_ECR/$CI_REGISTRY_PRODUCTION_IMAGE:$APP_NAME-latest
+    - docker images
+  dependencies:
+    - build-job-maven
+    - build-job-gradle
+
+deploy-job:
+  extends: .aws-login-job-template
+  stage: deploy
+  image: docker:latest
+  tags:
+    - tsp-dev1
+  script:
+    - echo "Running the deploy job."
+    - docker pull $CI_AWS_ECR/$CI_REGISTRY_PRODUCTION_IMAGE:$APP_NAME-latest
+    - docker container ls -a
+    - docker container rm -f $APP_NAME || true
+    - echo "Creating env file with CI/CD variables..."
+    - echo "" >> ./Infra/Docker/env.${SPRING_PROFILE}  # 빈 줄 추가 (newline)
+    - echo "AWS_SES_ACCESS_KEY=$AWS_SES_ACCESS_KEY" >> ./Infra/Docker/env.${SPRING_PROFILE}
+    - echo "AWS_SES_SECRET_KEY=$AWS_SES_SECRET_KEY" >> ./Infra/Docker/env.${SPRING_PROFILE}
+    - echo "SPRING_PROFILE=$SPRING_PROFILE" >> ./Infra/Docker/env.${SPRING_PROFILE}
+    - cat ./Infra/Docker/env.${SPRING_PROFILE}
+    - echo "Checking directory structure..."
+    - ls -R
+    - echo "Checking specific directory..."
+    - ls -R ./Infra/Docker
+    - echo "Current SPRING_PROFILE = ${SPRING_PROFILE}"
+    - ENV_FILE_PATH="$(pwd)/Infra/Docker/env.${SPRING_PROFILE}"
+    - echo "Using env file = $ENV_FILE_PATH"
+    - docker-compose --env-file $ENV_FILE_PATH --file ./Infra/docker-compose.yml up -d
+    - docker ps -a
+    - docker logs $APP_NAME
+  dependencies:
+    - docker-build-job

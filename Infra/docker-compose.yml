@@ -1,0 +1,44 @@
+services:
+  tsp-protocol-gatewway:
+    container_name: ${APP_NAME}
+    image: "${CI_AWS_ECR}/${CI_REGISTRY_PRODUCTION_IMAGE}:${APP_NAME}-latest"
+    #image: 169008021726.dkr.ecr.ap-northeast-2.amazonaws.com/engistech/gtsp/production:latest
+    restart: "on-failure"
+    env_file:
+      #- ${ENV_VENDOR_FILE}
+      - ./Docker/env.${SPRING_PROFILE}
+    environment:
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      VIRTUAL_PORT: ${VIRTUAL_PORT}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE}
+      JAVA_OPTS: ${JAVA_OPTS}
+      #NODE_ENV: production
+      #NODE_ENV: ${NODE_ENV}
+      #DB_HOST: ${DB_HOST}
+      #MQTT_HOST : ${MQTT_HOST}
+      #PORT: ${PORT}
+      TZ: 'Asia/Seoul'
+      PATH: "/usr/local/openjdk-17/bin:/app:$PATH"
+    #depends_on:
+      #- db
+    ports:
+      #- "8090:8090"
+      - "${VIRTUAL_PORT}:${APP_PORT}"  # VIRTUAL_PORT를 호스트 측 포트로, APP_PORT를 컨테이너 측 포트로 매핑
+    expose:
+      - "${APP_PORT}"  # 다른 컨테이너에 노출할 포트
+    networks:
+      - backend
+    volumes:
+      #- "./logs:/app/logs"  # 호스트의 logs 폴더를 컨테이너의 /app/logs에 매핑
+      - "/data-pool/docker/${APP_NAME}/volumes/logs:/app/logs"
+      #- "/data-pool/docker/${APP_NAME}/volumes/webapp:/app"
+
+networks:
+  backend:
+    name: backend
+    driver: bridge
+    external: true
+
+

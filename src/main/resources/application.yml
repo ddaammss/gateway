@@ -1,0 +1,180 @@
+server:
+  port: 8200
+  forward-headers-strategy: framework
+  servlet:
+    jsp:
+      init-parameters:
+        development: true   # JSP 파일 변경 시 서버 재시작 없이 반영
+spring:
+  application:
+    name: tsp_protocol_gateway
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: false
+  profiles:
+    active: local
+  main:
+    banner-mode: OFF
+
+logging:
+  file:
+    name: spring
+    path: /app/logs
+  pattern:
+    console: "[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] [%logger{36}] - %msg%n"
+    file: "[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-5level] [%logger{36}] - %msg%n"
+  level:
+    org.hibernate: ERROR
+    org.hibernate.engine.jdbc: ERROR
+    org.springframework.jdbc: ERROR
+    org.springframework.orm.jpa: ERROR
+
+mqtt:
+  version: v5
+  broker:
+    # MQTT Broker
+    address: tcp://mqtt.telematic.me:1883
+    username: mqtt
+    password: engis
+    clientId: mqttClient_autocode
+    qos: 1
+    max-retries: 5
+    timeout:
+      completion: 30000
+      disconnection: 5000
+      connection: 30
+    keep-alive-interval: 60
+  # MQTT 통신과 로그에서 UTF-8 설정을 강제
+  client:
+    encoding: UTF-8
+
+  http:
+    encoding:
+      charset: UTF-8
+      force: true                           # 모든 요청/응답에 UTF-8 인코딩 강제
+
+  topic:
+    test: "test/topic"
+    emitAcnEvent: "+/V2C/+/+/acn"
+    receiveAcnResponse: "{deviceId}/C2V/{ecuId}/{appId}/acn/result"
+    emitAcnVctEvent: "+/V2C/+/+/acn/vct"
+    receiveAcnVctResponse: "{deviceId}/C2V/{ecuId}/{appId}/acn/vct/result"
+    emitAcnErrorEvent: "+/V2C/+/+/acn/error"
+    receiveAcnRetransmitCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/acn"
+    emitSosEvent: "+/V2C/+/+/sos"
+    receiveSosResponse: "{deviceId}/C2V/{ecuId}/{appId}/sos/result"
+    emitSosVctEvent: "+/V2C/+/+/sos/vct"
+    receiveSosVctResponse: "{deviceId}/C2V/{ecuId}/{appId}/sos/vct/result"
+    emitSosErrorEvent: "+/V2C/+/+/sos/error"
+    receiveSosRetransmitCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/sos"
+    emitRsnEvent: "+/V2C/+/+/rsn"
+    receiveRsnResponse: "{deviceId}/C2V/{ecuId}/{appId}/rsn/result"
+    emitRsnVctEvent: "+/V2C/+/+/rsn/vct"
+    receiveRsnVctResponse: "{deviceId}/C2V/{ecuId}/{appId}/rsn/vct/result"
+    emitRsnErrorEvent: "+/V2C/+/+/rsn/error"
+    receiveRsnRetransmitCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/rsn"
+    receiveVlsCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/vls"
+    emitVlsStartCommandResult: "+/V2C/+/+/cmd/result/vls/start"
+    emitVlsVehicleReport: "+/V2C/+/+/vls"
+    receiveVlsVehicleReportResponse: "{deviceId}/C2V/{ecuId}/{appId}/vls/result"
+    emitVlsStopCommandResult: "+/V2C/+/+/cmd/result/vls/stop"
+    emitVoiceCallEvent: "+/V2C/+/+/cmd/result/vls/voice"
+    emitTrackingVctEvent: "+/V2C/+/+/vls/vct"
+    receiveTrackingVctResponse: "{deviceId}/C2V/{ecuId}/{appId}/vls/vct/result"
+    receiveProvisioningCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/provisioning"
+    publishProvisioningResult: "+/V2C/+/+/cmd/result/provisioning"
+    emitCustActivationRequest: "+/V2C/+/+/cust"
+    receiveCustProvisioningConfiguration: "{deviceId}/C2V/{ecuId}/{appId}/cust/provisioning"
+    publishCustResult: "+/V2C/+/+/cust/provisioning/result"
+    emitHealthCheckEvent: "+/V2C/+/+/dhc"
+    receiveDhcResponse: "{deviceId}/C2V/{ecuId}/{appId}/dhc/result"
+    emitDhcErrorEvent: "+/V2C/+/+/dhc/error"
+    receiveDhcCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/dhc"
+    receiveVoiceKillCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/voicekill"
+    emitVoiceKillResult: "+/V2C/+/+/cmd/result/voicekill"
+    ecuIdString: "DESTSW"
+    appIdString: "safety"
+
+  subscribe:
+    emitAcnEvent: "+/V2C/+/+/acn"
+    emitAcnVctEvent: "+/V2C/+/+/acn/vct"
+    emitAcnErrorEvent: "+/V2C/+/+/acn/error"
+    emitSosEvent: "+/V2C/+/+/sos"
+    emitSosVctEvent: "+/V2C/+/+/sos/vct"
+    emitSosErrorEvent: "+/V2C/+/+/sos/error"
+    emitRsnEvent: "+/V2C/+/+/rsn"
+    emitRsnVctEvent: "+/V2C/+/+/rsn/vct"
+    emitRsnErrorEvent: "+/V2C/+/+/rsn/error"
+    emitVlsStartCommandResult: "+/V2C/+/+/cmd/result/vls/start"
+    emitVlsVehicleReport: "+/V2C/+/+/vls"
+    emitVlsStopCommandResult: "+/V2C/+/+/cmd/result/vls/stop"
+    emitVoiceCallEvent: "+/V2C/+/+/cmd/result/vls/voice"
+    emitTrackingVctEvent: "+/V2C/+/+/vls/vct"
+    publishProvisioningResult: "+/V2C/+/+/cmd/result/provisioning"
+    emitCustActivationRequest: "+/V2C/+/+/cust"
+    publishCustResult: "+/V2C/+/+/cust/provisioning/result"
+    emitHealthCheckEvent: "+/V2C/+/+/dhc"
+    emitDhcErrorEvent: "+/V2C/+/+/dhc/error"
+    emitVoiceKillResult: "+/V2C/+/+/cmd/result/voicekill"
+
+  publish:
+    receiveAcnResponse: "{deviceId}/C2V/{ecuId}/{appId}/acn/result"
+    receiveAcnVctResponse: "{deviceId}/C2V/{ecuId}/{appId}/acn/vct/result"
+    receiveAcnRetransmitCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/acn"
+    receiveSosResponse: "{deviceId}/C2V/{ecuId}/{appId}/sos/result"
+    receiveSosVctResponse: "{deviceId}/C2V/{ecuId}/{appId}/sos/vct/result"
+    receiveSosRetransmitCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/sos"
+    receiveRsnResponse: "{deviceId}/C2V/{ecuId}/{appId}/rsn/result"
+    receiveRsnVctResponse: "{deviceId}/C2V/{ecuId}/{appId}/rsn/vct/result"
+    receiveRsnRetransmitCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/rsn"
+    receiveVlsCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/vls"
+    receiveVlsVehicleReportResponse: "{deviceId}/C2V/{ecuId}/{appId}/vls/result"
+    receiveTrackingVctResponse: "{deviceId}/C2V/{ecuId}/{appId}/vls/vct/result"
+    receiveProvisioningCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/provisioning"
+    receiveCustProvisioningConfiguration: "{deviceId}/C2V/{ecuId}/{appId}/cust/provisioning"
+    receiveDhcResponse: "{deviceId}/C2V/{ecuId}/{appId}/dhc/result"
+    receiveDhcCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/dhc"
+    receiveVoiceKillCommandMessage: "{deviceId}/C2V/{ecuId}/{appId}/cmd/voicekill"
+
+  operationTraits:
+    acnResult:
+      messageExpiryInterval: 86400
+    acnVctResult:
+      messageExpiryInterval: 30
+    acnCommand:
+      messageExpiryInterval: 60
+    sosResult:
+      messageExpiryInterval: 43200
+    sosVctResult:
+      messageExpiryInterval: 30
+    sosCommand:
+      messageExpiryInterval: 60
+    rsnReuslt:
+      messageExpiryInterval: 43200
+    rsnVctResult:
+      messageExpiryInterval: 30
+    rsnCommand:
+      messageExpiryInterval: 60
+    vlsResult:
+      messageExpiryInterval: 60
+    vlsCommand:
+      messageExpiryInterval: 60
+    vlsVctResult:
+      messageExpiryInterval: 60
+    provisioning:
+      messageExpiryInterval: 60
+    custResult:
+      messageExpiryInterval: 60
+    dhcResult:
+      messageExpiryInterval: 60
+    dhcCommand:
+      messageExpiryInterval: 60
+    voiceKillCommand:
+      messageExpiryInterval: 60
+
+  schemaVersion: "01.05.00"
+  userAgent: "24CY-KR-DCM-LGE"

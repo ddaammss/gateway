@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: ENC(+3ROB+f1Qtmp6C1klN62CrlpKtWJ55nzsWP/AX9FhkJpbYKtdfHpbt+P3+l8BHedfyOf9DAbi2FXi76QcB02AAHA2JxulVEve2Nk8dfDaRwEcrNKDpSvjhohpIVIE06CbBv1wtq16dZhxNOOJ7OcjK4GMVzZLClv5yfH23sc2j0=)
+    username: ENC(OAZiskfuckg38n619Qmhew==)
+    password: ENC(hPdj2xB1mODH4Ffa8WvP0i0D2VfRo7ql)
+ccb:
+  uri: http://localhost
+  port: 8300

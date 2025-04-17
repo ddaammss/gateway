@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: ENC(iu2x4XyQ1Y+8PBvywOKnvRCczlRUMNoRzWL33YrXqKQqmGWZU6qAeoT9mKmEInzLIuv3DnStWxWE31gtuCnfqtISrSYFZ8nT9uzre6pmwEoxL058nOmMVQOP81PIGG1h)
+    username: ENC(OQLc/1osVrT+wj+LDdBNPzIamBZEM3Tl)
+    password: ENC(Nxi812/hOFay2pm/pcN1f9YeBUX3urYDnYtyzOpQZTFvgQKfz434qpLJuONBu/8g)
+ccb:
+  uri: http://dev1.toyota.engistech.com
+  port: 8300
